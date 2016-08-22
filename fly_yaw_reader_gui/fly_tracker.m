@@ -22,7 +22,7 @@ function varargout = fly_tracker(varargin)
 
 % Edit the above text to modify the response to help fly_tracker
 
-% Last Modified by GUIDE v2.5 17-Dec-2015 18:53:42
+% Last Modified by GUIDE v2.5 22-Aug-2016 12:47:03
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -59,7 +59,7 @@ handles.output = hObject;
 % uiwait(handles.figure1);
 
 % Prompt for an experiment directory
-dname = uigetdir('C:\Users\wilson_lab\Desktop\Sasha\data\', 'Please chose an experiment directory.');
+dname = uigetdir('C:\Users\sasha\Dropbox\Wilson_lab\data\ephys\', 'Please chose an experiment directory.');
 handles.experiment_dir = dname;
 
 ghandles = guihandles(hObject);
@@ -85,7 +85,7 @@ function experiment_dir_button_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-dname = uigetdir('C:\Users\wilson_lab\Desktop\Sasha\data\');
+dname = uigetdir('C:\Users\sasha\Dropbox\Wilson_lab\data\ephys\');
 handles.experiment_dir = dname;
 
 ghandles = guihandles(hObject);
@@ -271,7 +271,7 @@ function task_file_button_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-[FileName,PathName] = uigetfile('C:\Users\wilson_lab\Desktop\Sasha\task_files\*.txt','Select a task file');
+[FileName,PathName] = uigetfile('C:\Users\sasha\Dropbox\Wilson_lab\fly_yaw_reader_ephys\task_files\*.txt','Select a task file');
 
 handles.taskfile_path = [PathName '\' FileName];
 
@@ -298,7 +298,6 @@ run_obj.pre_stim_t = str2num(get(ghandles.pre_stim_edit, 'String'));
 run_obj.stim_t = str2num(get(ghandles.stim_edit, 'String'));
 run_obj.post_stim_t = str2num(get(ghandles.post_stim_edit, 'String'));
 run_obj.inter_trial_t = str2num(get(ghandles.inter_trial_period_edit, 'String'));
-run_obj.using_2p = get(ghandles.using_2p_button, 'Value');
 
 contents = get(ghandles.stim_type_menu,'String'); 
 run_obj.stim_type = contents; % contents{get(ghandles.stim_type_menu,'Value')};
@@ -308,7 +307,10 @@ run_obj.session_id = str2num(get(ghandles.session_id_edit, 'String'));
 run_obj.sessiod_id_hdl = ghandles.session_id_edit;
 run_obj.taskfile_path = task_filepath;
 
-start_trials(run_obj);
+run_obj.injection_current = str2num(get(ghandles.external_command_edit, 'String'));
+
+%start_trials(run_obj);
+start_trials_continuous(run_obj);
 
 guidata(hObject, handles);
 
@@ -332,3 +334,38 @@ function session_id_edit_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+
+function external_command_edit_Callback(hObject, eventdata, handles)
+% hObject    handle to external_command_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of external_command_edit as text
+%        str2double(get(hObject,'String')) returns contents of external_command_edit as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function external_command_edit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to external_command_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in stop_button.
+function stop_button_Callback(hObject, eventdata, handles)
+% hObject    handle to stop_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+global session_obj;
+session_obj.stop();
+release( session_obj );
+disp(['Stopped acquisition.']);
