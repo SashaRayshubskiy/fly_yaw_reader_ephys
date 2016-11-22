@@ -22,7 +22,7 @@ function varargout = fly_tracker(varargin)
 
 % Edit the above text to modify the response to help fly_tracker
 
-% Last Modified by GUIDE v2.5 22-Aug-2016 12:47:03
+% Last Modified by GUIDE v2.5 27-Sep-2016 17:02:28
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -309,6 +309,8 @@ run_obj.taskfile_path = task_filepath;
 
 run_obj.injection_current = str2num(get(ghandles.external_command_edit, 'String'));
 
+run_obj.patch_id = str2num(get(ghandles.patch_id_edit, 'String'));
+
 %start_trials(run_obj);
 start_trials_continuous(run_obj);
 
@@ -369,3 +371,157 @@ global session_obj;
 session_obj.stop();
 release( session_obj );
 disp(['Stopped acquisition.']);
+
+
+
+function patch_id_edit_Callback(hObject, eventdata, handles)
+% hObject    handle to patch_id_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of patch_id_edit as text
+%        str2double(get(hObject,'String')) returns contents of patch_id_edit as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function patch_id_edit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to patch_id_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in record_pipette_resistance_button.
+function record_pipette_resistance_button_Callback(hObject, eventdata, handles)
+% hObject    handle to record_pipette_resistance_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+ghandles = guihandles(hObject);
+
+s = daq.createSession('ni');
+aI = s.addAnalogInputChannel('Dev1', 0, 'Voltage');
+aI(1).InputType = 'SingleEnded';
+
+settings = sensor_settings;
+
+SAMPLING_RATE = settings.sampRate;
+s.Rate = SAMPLING_RATE;
+s.DurationInSeconds = 1.0;
+
+[trial_data, trial_time] = s.startForeground();
+release(s);
+
+CURRENT_SCALING_FACTOR = 1000 / settings.current_gain;
+current = trial_data(:,1);
+
+pipette_resistance = pipetteResistanceCalc( current * CURRENT_SCALING_FACTOR );
+
+set(ghandles.pipette_resistance_text, 'String', [num2str(pipette_resistance) ' MOhm']); 
+
+patch_id = str2num(get(ghandles.patch_id_edit, 'String'));
+
+experiment_dir = handles.experiment_dir;
+
+pr_filename = [experiment_dir '/pipette_resistance_patch_' num2str(patch_id) '.txt'];
+
+
+fileID = fopen(pr_filename,'w+');
+fprintf(fileID,'%f MOhm\n',pipette_resistance);
+fclose(fileID);
+
+pr_filename_mat = [experiment_dir '/pipette_resistance_patch_' num2str(patch_id) '.mat'];
+save(pr_filename_mat, 'current', 'trial_time');
+
+guidata(hObject, handles);
+
+% --- Executes on button press in record_access_resistance_button.
+function record_access_resistance_button_Callback(hObject, eventdata, handles)
+% hObject    handle to record_access_resistance_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+ghandles = guihandles(hObject);
+
+s = daq.createSession('ni');
+aI = s.addAnalogInputChannel('Dev1', 0, 'Voltage');
+aI(1).InputType = 'SingleEnded';
+
+settings = sensor_settings;
+
+SAMPLING_RATE = settings.sampRate;
+s.Rate = SAMPLING_RATE;
+s.DurationInSeconds = 1.0;
+
+[trial_data, trial_time] = s.startForeground();
+release(s);
+
+CURRENT_SCALING_FACTOR = 1000 / settings.current_gain;
+current = trial_data(:,1);
+
+access_resistance = accessResistanceCalc( current * CURRENT_SCALING_FACTOR, SAMPLING_RATE );
+
+set(ghandles.access_resistance_text, 'String', [num2str(access_resistance) ' MOhm']); 
+
+patch_id = str2num(get(ghandles.patch_id_edit, 'String'));
+
+experiment_dir = handles.experiment_dir;
+
+pr_filename = [experiment_dir '/access_resistance_patch_' num2str(patch_id) '.txt'];
+
+fileID = fopen(pr_filename,'w+');
+fprintf(fileID,'%f MOhm\n',access_resistance);
+fclose(fileID);
+
+pr_filename_mat = [experiment_dir '/access_resistance_patch_' num2str(patch_id) '.mat'];
+save(pr_filename_mat, 'current', 'trial_time');
+
+guidata(hObject, handles);
+
+% --- Executes on button press in record_i_0_resting_voltage.
+function record_i_0_resting_voltage_Callback(hObject, eventdata, handles)
+% hObject    handle to record_i_0_resting_voltage (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+ghandles = guihandles(hObject);
+
+s = daq.createSession('ni');
+aI = s.addAnalogInputChannel('Dev1', 1, 'Voltage');
+aI(1).InputType = 'SingleEnded';
+
+settings = sensor_settings;
+
+SAMPLING_RATE = settings.sampRate;
+s.Rate = SAMPLING_RATE;
+s.DurationInSeconds = 1.0;
+
+[trial_data, trial_time] = s.startForeground();
+release(s);
+
+VOLTAGE_SCALING_FACTOR = 10;
+voltage = trial_data(:,1);
+
+resting_voltage = mean( voltage * VOLTAGE_SCALING_FACTOR );
+
+set(ghandles.i_0_resting_voltage_text, 'String', [num2str(resting_voltage) ' mV']); 
+
+patch_id = str2num(get(ghandles.patch_id_edit, 'String'));
+
+experiment_dir = handles.experiment_dir;
+
+pr_filename = [experiment_dir '/initial_resting_voltage_patch_' num2str(patch_id) '.txt'];
+
+fileID = fopen(pr_filename,'w+');
+fprintf(fileID, '%f mV\n', resting_voltage);
+fclose(fileID);
+
+pr_filename_mat = [experiment_dir '/initial_resting_voltage_patch_' num2str(patch_id) '.mat'];
+save(pr_filename_mat, 'voltage', 'trial_time');
+
+guidata(hObject, handles);

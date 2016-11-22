@@ -1,9 +1,9 @@
 function [] = display_all_trials( task, trial_time, trial_data, viz_figs, pre_stim_t, stim_t )
 
-colors = {'red', 'green', 'blue', 'black', 'brown'};
+colors = { rgb('Red'), rgb('Green'), rgb('Blue'), rgb('Black'), rgb('Brown'), rgb('Purple')};
 cur_color = '';
 
-if( (strcmp(task, 'LeftOdor') == 1 ) )
+if( (strcmp(task, 'LeftOdor') == 1 ) || (strcmp(task, 'WideFieldLight') == 1 ) )
     cur_color = colors{1};
 elseif( strcmp(task, 'RightOdor') == 1 )
     cur_color = colors{2};
@@ -11,10 +11,11 @@ elseif( strcmp(task, 'BothOdor') == 1 )
     cur_color = colors{3};
 elseif( strcmp(task, 'NaturalOdor') == 1 )
     cur_color = colors{4};
-elseif( strcmp(task, 'ExternalCommand') == 1 )
+elseif( strcmp(task, 'ExternalCommandDepol') == 1 )
     cur_color = colors{5};
-    legend_idx = 5;
-elseelse
+elseif( strcmp(task, 'ExternalCommandHypopol') == 1 )
+    cur_color = colors{6};
+else
     disp(['ERROR: Task: ' task ' is not recognized.']);
 end
 
@@ -67,7 +68,7 @@ t_first = trial_time(1);
 
 subplot(4,1,3);
 hold on;
-CURRENT_SCALING_FACTOR = 0.5;
+CURRENT_SCALING_FACTOR = 500;
 plot(trial_time, CURRENT_SCALING_FACTOR * current, 'color', cur_color );
 xlim([0 trial_time(end)]);
 ylabel('Current (pA)');

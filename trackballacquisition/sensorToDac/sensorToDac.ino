@@ -7,7 +7,6 @@
 #define MCP4725_ADDR_1 0x60    //first dac i2c address
 #define MCP4725_ADDR_2 0x61    //second dac i2c address
 
-
 byte initComplete = 0;
 volatile int xydat[2];
 int wireOut[2];

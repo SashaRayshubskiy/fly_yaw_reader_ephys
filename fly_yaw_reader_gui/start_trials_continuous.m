@@ -35,13 +35,15 @@ if(strcmp(stim_type, 'Task File') == 1)
     
     % Setup data structures for read / write on the daq board
     session_obj = daq.createSession('ni');
+    deviceId = 'Dev1';
     
-    session_obj.addAnalogOutputChannel('Dev2', 0:1, 'Voltage');
+    session_obj.addDigitalChannel( deviceId, 'port0/line0:2', 'OutputOnly' );
+    session_obj.addAnalogOutputChannel( deviceId, [0 1], 'Voltage');
     
     % These are for inputs: motion sensor 1 x,y; motion sensor 2 x,y; frame
     % clock; stim left; stim right;
-    ai_channels_used = [0:13];
-    aI = session_obj.addAnalogInputChannel('Dev2', ai_channels_used, 'Voltage');
+    ai_channels_used = [0:14];
+    aI = session_obj.addAnalogInputChannel( deviceId, ai_channels_used, 'Voltage' );
     for i=1:length(ai_channels_used)
         aI(i).InputType = 'SingleEnded';
     end
@@ -55,18 +57,38 @@ if(strcmp(stim_type, 'Task File') == 1)
     session_obj.Rate = SAMPLING_RATE;
    
     pre_out_chan_0 = zeros( task_cnt, SAMPLING_RATE * total_duration );
-    pre_out_chan_1 = zeros( task_cnt, SAMPLING_RATE * total_duration );
+    pre_out_chan_1 = zeros( task_cnt, SAMPLING_RATE * total_duration );    
+    pre_out_chan_2 = zeros( task_cnt, SAMPLING_RATE * total_duration );
+
+    pre_out_chan_3 = zeros( task_cnt, SAMPLING_RATE * total_duration );
+    pre_out_chan_4 = zeros( task_cnt, SAMPLING_RATE * total_duration );
     
     pre_stim_t = run_obj.pre_stim_t;
     stim_t     = run_obj.stim_t;
     
+    % Setup optogenetic stim 
     begin_idx = run_obj.pre_stim_t * SAMPLING_RATE;
     end_idx = (run_obj.pre_stim_t+run_obj.stim_t) * SAMPLING_RATE;
     stim = zeros(1,SAMPLING_RATE * total_duration);
-    stim(begin_idx:end_idx) = 5.0;
+    stim(begin_idx:end_idx) = 1.0;
 
+    % Setup external command stim
+    CURRENT_INJECTION_IN_pA_PER_VOLT = 127.0; % This number assumes a 0.0637 voltage drop across the downstep resistors    
+    injection_current = run_obj.injection_current;    
+    external_command = zeros( SAMPLING_RATE*total_duration , 1 );    
+    external_command(begin_idx:end_idx) = injection_current ./ CURRENT_INJECTION_IN_pA_PER_VOLT;
+    
+    camera_triggers = zeros(1,SAMPLING_RATE * total_duration);
+    
+    CAMERA_FPS = 32.0;
+    
+    camera_triggers(1:(SAMPLING_RATE/CAMERA_FPS):end) = 1;
+    
     for i = 1:task_cnt
         cur_task = tasks{i}; 
+    
+        % Camera triggers     
+        pre_out_chan_2(i,:) = camera_triggers;
         
         if( strcmp(cur_task, 'LeftOdor') == 1 )
             pre_out_chan_0(i,:) = stim;
@@ -75,17 +97,12 @@ if(strcmp(stim_type, 'Task File') == 1)
         elseif( strcmp(cur_task, 'BothOdor') == 1 )
             pre_out_chan_0(i,:) = stim;
             pre_out_chan_1(i,:) = stim;
-        elseif( strcmp(cur_task, 'ExternalCommand') == 1 )
-            
-            CURRENT_INJECTION_IN_pA_PER_VOLT = 127.0; % This number assumes a 0.0637 voltage drop across the downstep resistors
-            
-            injection_current = run_obj.injection_current;
-            
-            external_command = zeros( SAMPLING_RATE*total_duration , 1 );
-            
-            external_command(begin_idx:end_idx) = injection_current ./ CURRENT_INJECTION_IN_pA_PER_VOLT;
-            
-            pre_out_chan_0(i,:) = external_command;
+        elseif( strcmp(cur_task, 'WideFieldLight') == 1 )
+            pre_out_chan_4(i,:) = stim*5.0;
+        elseif( strcmp(cur_task, 'ExternalCommandDepol') == 1 )
+            pre_out_chan_3(i,:) = external_command;
+        elseif( strcmp(cur_task, 'ExternalCommandHypopol') == 1 )
+            pre_out_chan_3(i,:) = -1.0 * external_command;
         else            
             disp(['ERROR: Task: ' task ' is not recognized.']);
         end
@@ -93,6 +110,9 @@ if(strcmp(stim_type, 'Task File') == 1)
     
     out_chan_0 = reshape( pre_out_chan_0', [size(pre_out_chan_0,1)*size(pre_out_chan_0,2) 1]);
     out_chan_1 = reshape( pre_out_chan_1', [size(pre_out_chan_1,1)*size(pre_out_chan_1,2) 1]);
+    out_chan_2 = reshape( pre_out_chan_2', [size(pre_out_chan_2,1)*size(pre_out_chan_2,2) 1]);
+    out_chan_3 = reshape( pre_out_chan_3', [size(pre_out_chan_3,1)*size(pre_out_chan_3,2) 1]);
+    out_chan_4 = reshape( pre_out_chan_4', [size(pre_out_chan_4,1)*size(pre_out_chan_4,2) 1]);
     
     if 0
     figure;
@@ -105,12 +125,15 @@ if(strcmp(stim_type, 'Task File') == 1)
     
     out_chan_0 = vertcat( out_chan_0, buffer );
     out_chan_1 = vertcat( out_chan_1, buffer );
+    out_chan_2 = vertcat( out_chan_2, buffer );
+    out_chan_3 = vertcat( out_chan_3, buffer );
+    out_chan_4 = vertcat( out_chan_4, buffer );
     
-    output_data = [ out_chan_0, out_chan_1 ];
+    output_data = [ out_chan_0, out_chan_1, out_chan_2, out_chan_3, out_chan_4 ];
     
-    queueOutputData(session_obj, output_data);
+    queueOutputData( session_obj, output_data );
     
-    addlistener(session_obj, 'DataAvailable', @processTrialData);
+    addlistener( session_obj, 'DataAvailable', @processTrialData );
     session_obj.NotifyWhenDataAvailableExceeds = session_obj.Rate * total_duration;
     session_obj.IsContinuous = true;
     session_obj.startBackground();

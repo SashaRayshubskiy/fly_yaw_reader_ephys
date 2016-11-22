@@ -2,6 +2,8 @@ function settings = sensor_settings
 
 % Acquisition params
 settings.sampRate = 4000;
+settings.current_gain = 2.0;
+settings.voltage_gain = 10.0;
 
 % Stim parameters
 settings.pre_stim = 3.0;
