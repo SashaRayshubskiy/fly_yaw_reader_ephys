@@ -35,14 +35,14 @@ if(strcmp(stim_type, 'Task File') == 1)
     
     % Setup data structures for read / write on the daq board
     session_obj = daq.createSession('ni');
-    deviceId = 'Dev1';
+    deviceId = 'Dev3';
     
     session_obj.addDigitalChannel( deviceId, 'port0/line0:2', 'OutputOnly' );
     session_obj.addAnalogOutputChannel( deviceId, [0 1], 'Voltage');
     
     % These are for inputs: motion sensor 1 x,y; motion sensor 2 x,y; frame
     % clock; stim left; stim right;
-    ai_channels_used = [0:14];
+    ai_channels_used = [0:31];
     aI = session_obj.addAnalogInputChannel( deviceId, ai_channels_used, 'Voltage' );
     for i=1:length(ai_channels_used)
         aI(i).InputType = 'SingleEnded';
@@ -162,8 +162,8 @@ function processTrialData(src,event)
     trial_bdata = event.Data;
     trial_time  = event.TimeStamps;
     
-    display_all_trials( cur_task, trial_time, trial_bdata, viz_figs, pre_stim_t, stim_t );  
-    display_single_trials( cur_task, trial_time, trial_bdata, viz_figs, total_duration, pre_stim_t, stim_t );  
+    display_all_trials( cur_task, trial_time, trial_bdata, viz_figs, pre_stim_t, stim_t, experiment_dir );  
+    display_single_trials( cur_task, trial_time, trial_bdata, viz_figs, total_duration, pre_stim_t, stim_t, experiment_dir );  
     
     disp(['Finished with trial: ' num2str(current_trial_idx-1) ]);
 

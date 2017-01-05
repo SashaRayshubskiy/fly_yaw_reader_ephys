@@ -1,4 +1,4 @@
-function [] = display_all_trials( task, trial_time, trial_data, viz_figs, pre_stim_t, stim_t )
+function [] = display_all_trials( task, trial_time, trial_data, viz_figs, pre_stim_t, stim_t, experiment_dir )
 
 colors = { rgb('Red'), rgb('Green'), rgb('Blue'), rgb('Black'), rgb('Brown'), rgb('Purple')};
 cur_color = '';
@@ -19,7 +19,8 @@ else
     disp(['ERROR: Task: ' task ' is not recognized.']);
 end
 
-[ t, vel_forward, vel_side, vel_yaw ] = get_velocity_ephysrig(trial_time, trial_data); 
+use_calibration = 1;
+[ t, vel_forward, vel_side, vel_yaw ] = get_velocity_ephysrig(trial_time, trial_data, experiment_dir, use_calibration); 
 
 % Display trial raw trajectory
 % figure(viz_figs.run_traj_fig);
@@ -31,8 +32,8 @@ dt = 1.0/settings.sensorPollFreq;
 [disp_x, disp_y] = calculate_fly_position_no_yaw(vel_forward, vel_side, dt, 0, 0);
 hold on;
 plot(disp_x, disp_y, 'color', cur_color);
-xlabel('X displacement (au)');
-ylabel('Y displacement (au)');
+xlabel('X displacement (mm)');
+ylabel('Y displacement (mm)');
 
 set( 0, 'CurrentFigure', viz_figs.all_trials_fig )
 
@@ -62,14 +63,14 @@ hh = fill([ t_vel_first+pre_stim_t t_vel_first+pre_stim_t (t_vel_first+pre_stim_
 set(gca,'children',circshift(get(gca,'children'),-1));
 set(hh, 'EdgeColor', 'None');
 
-current = trial_data(:,1);
-voltage = trial_data(:,2);
+[currentA, voltageA, currentB, voltageB] = get_dual_scaled_voltage_and_current( trial_data );
+
 t_first = trial_time(1);
 
 subplot(4,1,3);
 hold on;
-CURRENT_SCALING_FACTOR = 500;
-plot(trial_time, CURRENT_SCALING_FACTOR * current, 'color', cur_color );
+plot(trial_time, currentA, 'color', cur_color );
+plot(trial_time, currentB, 'color', cur_color, 'LineStyle', '--' );
 xlim([0 trial_time(end)]);
 ylabel('Current (pA)');
 yy = ylim;
@@ -79,9 +80,9 @@ set(gca,'children',circshift(get(gca,'children'),-1));
 set(hh, 'EdgeColor', 'None');
 
 subplot(4,1,4);
-VOLTAGE_SCALING_FACTOR = 10;
 hold on;
-plot(trial_time, VOLTAGE_SCALING_FACTOR * voltage, 'color', cur_color );
+plot(trial_time, voltageA, 'color', cur_color );
+plot(trial_time, voltageB, 'color', cur_color, 'LineStyle', '--' );
 xlim([0 trial_time(end)]);
 xlabel('Time (s)');
 ylabel('Voltage (mV)')

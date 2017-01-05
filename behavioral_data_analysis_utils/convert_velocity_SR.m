@@ -1,4 +1,4 @@
-function [v_fwd,v_side,v_yaw] = convert_velocity_TO(vel_fwd, vel_side, vel_yaw)
+function [v_fwd,v_side,v_yaw] = convert_velocity_SR(vel_fwd, vel_side, vel_yaw)
 %%% converting the velocity signal using the calibration results
 %%% v_old: v_forward, v_side, v_yaw
 %%% 2p imaging setup
@@ -6,11 +6,11 @@ function [v_fwd,v_side,v_yaw] = convert_velocity_TO(vel_fwd, vel_side, vel_yaw)
 %%% 2016/10/18
 
 %% parameters (for device 3 for 2P imaging)
-a_forward = 0.00745;
-b_forward = 0.0046;
+a_forward = 0.0051;
+b_forward = -0.00055;
 
-a_side = 0.00607;
-b_side = -0.014;
+a_side = 0.003;
+b_side = 0.00096;
 
 a_yaw = 0.000395;
 b_yaw = 0.0034;

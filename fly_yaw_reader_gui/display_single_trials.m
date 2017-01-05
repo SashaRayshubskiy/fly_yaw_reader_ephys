@@ -1,4 +1,4 @@
-function [] = display_single_trials( task, trial_time, trial_data, viz_figs, total_duration, pre_stim_t, stim_t )
+function [] = display_single_trials( task, trial_time, trial_data, viz_figs, total_duration, pre_stim_t, stim_t, experiment_dir )
 
 colors = { rgb('Red'), rgb('Green'), rgb('Blue'), rgb('Black'), rgb('Brown'), rgb('Purple') };
 cur_color = '';
@@ -19,7 +19,8 @@ else
     disp(['ERROR: Task: ' task ' is not recognized.']);
 end
 
-[ t, vel_forward, vel_side, vel_yaw ] = get_velocity_ephysrig(trial_time, trial_data); 
+use_calibration = 1;
+[ t, vel_forward, vel_side, vel_yaw ] = get_velocity_ephysrig(trial_time, trial_data, experiment_dir, use_calibration ); 
 
 set( 0, 'CurrentFigure', viz_figs.single_trials_fig )
 
@@ -49,15 +50,17 @@ hh = fill([ pre_stim_t pre_stim_t (pre_stim_t+stim_t) (pre_stim_t+stim_t) ],[y_m
 set(gca,'children',circshift(get(gca,'children'),-1));
 set(hh, 'EdgeColor', 'None');
 
-current = trial_data(:,1);
-voltage = trial_data(:,2);
+[currentA, voltageA, currentB, voltageB] = get_dual_scaled_voltage_and_current( trial_data );
 
 subplot(4,1,3);
 hold on;
-CURRENT_SCALING_FACTOR = 500;
-plot(trial_time-t_0, CURRENT_SCALING_FACTOR * current, 'color', cur_color );
-xlim([0 total_duration]);
-ylabel('Current (pA)');
+plot(trial_time-t_0, voltageA, 'color', cur_color );
+%plot(trial_time-t_0, currentA, 'color', cur_color );
+%plot(trial_time-t_0, currentB, 'color', cur_color, 'LineStyle', '--' );
+xlim([0 trial_time(end)-t_0]);
+%ylabel('Current (pA)');
+ylabel('Voltage (mV)');
+title('Left neuron (A)')
 yy = ylim;
 y_min = yy(1)-yy(1)*0.01; y_max = yy(2);
 hh = fill([ pre_stim_t pre_stim_t (pre_stim_t+stim_t) (pre_stim_t+stim_t) ],[y_min y_max y_max y_min ], rgb('Wheat'));
@@ -65,12 +68,13 @@ set(gca,'children',circshift(get(gca,'children'),-1));
 set(hh, 'EdgeColor', 'None');
 
 subplot(4,1,4);
-VOLTAGE_SCALING_FACTOR = 10;
 hold on;
-plot(trial_time-t_0, VOLTAGE_SCALING_FACTOR * voltage, 'color', cur_color );
-xlim([0 total_duration]);
+plot(trial_time-t_0, voltageB, 'color', cur_color);
+xlim([0 trial_time(end)-t_0]);
 xlabel('Time (s)');
-ylabel('Voltage (mV)')
+ylabel('Voltage (mV)');
+title('Right neuron (B)')
+
 yy = ylim;
 y_min = yy(1)-yy(1)*0.01; y_max = yy(2);
 hh = fill([ pre_stim_t pre_stim_t (pre_stim_t+stim_t) (pre_stim_t+stim_t) ],[y_min y_max y_max y_min ], rgb('Wheat'));
