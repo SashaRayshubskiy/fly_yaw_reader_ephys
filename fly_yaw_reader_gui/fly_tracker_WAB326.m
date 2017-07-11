@@ -1,35 +1,35 @@
-function varargout = fly_tracker(varargin)
-% FLY_TRACKER MATLAB code for fly_tracker.fig
-%      FLY_TRACKER, by itself, creates a new FLY_TRACKER or raises the existing
+function varargout = fly_tracker_WAB326(varargin)
+% FLY_TRACKER_WAB326 MATLAB code for fly_tracker_WAB326.fig
+%      FLY_TRACKER_WAB326, by itself, creates a new FLY_TRACKER_WAB326 or raises the existing
 %      singleton*.
 %
-%      H = FLY_TRACKER returns the handle to a new FLY_TRACKER or the handle to
+%      H = FLY_TRACKER_WAB326 returns the handle to a new FLY_TRACKER_WAB326 or the handle to
 %      the existing singleton*.
 %
-%      FLY_TRACKER('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in FLY_TRACKER.M with the given input arguments.
+%      FLY_TRACKER_WAB326('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in FLY_TRACKER_WAB326.M with the given input arguments.
 %
-%      FLY_TRACKER('Property','Value',...) creates a new FLY_TRACKER or raises the
+%      FLY_TRACKER_WAB326('Property','Value',...) creates a new FLY_TRACKER_WAB326 or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before fly_tracker_OpeningFcn gets called.  An
+%      applied to the GUI before fly_tracker_WAB326_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to fly_tracker_OpeningFcn via varargin.
+%      stop.  All inputs are passed to fly_tracker_WAB326_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help fly_tracker
+% Edit the above text to modify the response to help fly_tracker_WAB326
 
-% Last Modified by GUIDE v2.5 30-Nov-2016 09:58:39
+% Last Modified by GUIDE v2.5 24-Feb-2017 15:12:09
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @fly_tracker_OpeningFcn, ...
-                   'gui_OutputFcn',  @fly_tracker_OutputFcn, ...
+                   'gui_OpeningFcn', @fly_tracker_WAB326_OpeningFcn, ...
+                   'gui_OutputFcn',  @fly_tracker_WAB326_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -44,22 +44,22 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before fly_tracker is made visible.
-function fly_tracker_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before fly_tracker_WAB326 is made visible.
+function fly_tracker_WAB326_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to fly_tracker (see VARARGIN)
+% varargin   command line arguments to fly_tracker_WAB326 (see VARARGIN)
 
-% Choose default command line output for fly_tracker
+% Choose default command line output for fly_tracker_WAB326
 handles.output = hObject;
 
-% UIWAIT makes fly_tracker wait for user response (see UIRESUME)
+% UIWAIT makes fly_tracker_WAB326 wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
 % Prompt for an experiment directory
-dname = uigetdir('C:\Users\sasha\Dropbox\Wilson_lab\paper_1\data\descending_neurons\', 'Please chose an experiment directory.');
+dname = uigetdir('C:\Users\Wilson Lab\Dropbox\Wilson_lab\paper_1\data\descending_neurons\', 'Please chose an experiment directory.');
 handles.experiment_dir = dname;
 
 ghandles = guihandles(hObject);
@@ -69,7 +69,7 @@ set(ghandles.experiment_dir_edit, 'String', dname);
 guidata(hObject, handles);
 
 % --- Outputs from this function are returned to the command line.
-function varargout = fly_tracker_OutputFcn(hObject, eventdata, handles) 
+function varargout = fly_tracker_WAB326_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -85,7 +85,7 @@ function experiment_dir_button_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-dname = uigetdir('C:\Users\sasha\Dropbox\Wilson_lab\paper_1\data\descending_neurons\');
+dname = uigetdir('C:\Users\Wilson Lab\Dropbox\Wilson_lab\paper_1\data\descending_neurons\');
 handles.experiment_dir = dname;
 
 ghandles = guihandles(hObject);
@@ -271,7 +271,7 @@ function task_file_button_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-[FileName,PathName] = uigetfile('C:\Users\sasha\Dropbox\Wilson_lab\fly_yaw_reader_ephys\task_files\*.txt','Select a task file');
+[FileName,PathName] = uigetfile('C:\Users\Wilson Lab\Dropbox\Wilson_lab\fly_yaw_reader_ephys\task_files\*.txt','Select a task file');
 
 handles.taskfile_path = [PathName '\' FileName];
 
@@ -312,8 +312,7 @@ run_obj.injection_current = str2num(get(ghandles.external_command_edit, 'String'
 run_obj.patch_id = str2num(get(ghandles.patch_id_edit, 'String'));
 
 %start_trials(run_obj);
-start_trials_continuous(run_obj);
-%start_trials_continuous_LED_mod(run_obj);
+start_trials_continuous_WAB326(run_obj);
 
 guidata(hObject, handles);
 
@@ -529,7 +528,7 @@ function init_ball_button_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % This requires the ball to not be moving.
-init_ball_parameters(handles.experiment_dir);
+init_ball_parameters_WAB326(handles.experiment_dir);
 
 
 % --- Executes on button press in record_pipette_resistance_button_B.

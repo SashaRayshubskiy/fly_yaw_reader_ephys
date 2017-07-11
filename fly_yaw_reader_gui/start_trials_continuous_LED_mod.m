@@ -1,4 +1,4 @@
-function [ output_args ] = start_trials_continuous( run_obj )
+function [ output_args ] = start_trials_continuous_LED_mod( run_obj )
 
 global tasks;
 global viz_figs;
@@ -29,8 +29,8 @@ if(strcmp(stim_type, 'Task File') == 1)
             
     SHOW_TRIAL_DATA = 1;
     if (SHOW_TRIAL_DATA == 1)
-        %viz_figs.run_traj_fig     = figure();    
-        %viz_figs.all_trials_fig    = figure('units','normalized','outerposition',[0 0 1 1]);
+        viz_figs.run_traj_fig     = figure();    
+        viz_figs.all_trials_fig    = figure('units','normalized','outerposition',[0 0 1 1]);
         viz_figs.single_trials_fig = figure('units','normalized','outerposition',[0 0 1 1]);
     end
     
@@ -42,8 +42,8 @@ if(strcmp(stim_type, 'Task File') == 1)
     session_obj = daq.createSession('ni');
     deviceId = 'Dev3';
     
-    session_obj.addDigitalChannel( deviceId, 'port0/line0:4', 'OutputOnly' );
-    session_obj.addAnalogOutputChannel( deviceId, [0 1], 'Voltage');
+    session_obj.addAnalogOutputChannel( deviceId, [0 1 2 3], 'Voltage');    
+    session_obj.addDigitalChannel( deviceId, 'port0/line2:4', 'OutputOnly' );
     
     % These are for inputs: motion sensor 1 x,y; motion sensor 2 x,y; frame
     % clock; stim left; stim right;
@@ -56,24 +56,95 @@ if(strcmp(stim_type, 'Task File') == 1)
     % This is the stim control: stim left, stim right
     settings = sensor_settings;
     
-    total_duration = run_obj.pre_stim_t + run_obj.stim_t + run_obj.post_stim_t + run_obj.inter_trial_t;
+    % total duration is set by LED stim
+    pre_stim_LED = 0.5;
+    stim_t_LED = 0.25;
+    post_stim_t_LED = 3.0;
+  
+    each_bout_t = pre_stim_LED + stim_t_LED + post_stim_t_LED;
+    NUMBER_OF_BOUTS = 3;
+    
+    total_duration = each_bout_t * NUMBER_OF_BOUTS;
+    
+    %total_duration = run_obj.pre_stim_t + run_obj.stim_t + run_obj.post_stim_t + run_obj.inter_trial_t;
     
     SAMPLING_RATE = settings.sampRate;
     session_obj.Rate = SAMPLING_RATE;
    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%% NEW MAPPING
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Analog Out: External command
     pre_out_chan_0 = zeros( task_cnt, SAMPLING_RATE * total_duration );
-    pre_out_chan_1 = zeros( task_cnt, SAMPLING_RATE * total_duration );    
+    
+    % Analog Out: WideFieldLight
+    pre_out_chan_1 = zeros( task_cnt, SAMPLING_RATE * total_duration );
+    
+    % Analog Out: Left LED
     pre_out_chan_2 = zeros( task_cnt, SAMPLING_RATE * total_duration );
+    
+    % Analog Out: Right LED
     pre_out_chan_3 = zeros( task_cnt, SAMPLING_RATE * total_duration );
-    pre_out_chan_4 = zeros( task_cnt, SAMPLING_RATE * total_duration );
 
+    % Digital Out: Camera triggers
+    pre_out_chan_4 = zeros( task_cnt, SAMPLING_RATE * total_duration );
+    
+    % Digital Out: Pico inject
     pre_out_chan_5 = zeros( task_cnt, SAMPLING_RATE * total_duration );
+
+    %  Digital Out: Natural Odor stim
     pre_out_chan_6 = zeros( task_cnt, SAMPLING_RATE * total_duration );
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%% OLD MAPPING
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Digital Out: Left LED
+    %pre_out_chan_0 = zeros( task_cnt, SAMPLING_RATE * total_duration );
+    
+    % Digital Out: Right LED
+    %pre_out_chan_1 = zeros( task_cnt, SAMPLING_RATE * total_duration );
+    
+    % Digital Out: Camera triggers
+    %pre_out_chan_2 = zeros( task_cnt, SAMPLING_RATE * total_duration );
+    
+    % Digital Out: Pico inject
+    %pre_out_chan_3 = zeros( task_cnt, SAMPLING_RATE * total_duration );
+
+    %  Digital Out: Natural Odor stim
+    %pre_out_chan_4 = zeros( task_cnt, SAMPLING_RATE * total_duration );
+    
+    % Analog Out: External command
+    %pre_out_chan_5 = zeros( task_cnt, SAMPLING_RATE * total_duration );
+    
+    % Analog Out: WideFieldLight
+    %pre_out_chan_6 = zeros( task_cnt, SAMPLING_RATE * total_duration );
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     pre_stim_t = run_obj.pre_stim_t;
     stim_t     = run_obj.stim_t;
     
-    % Setup optogenetic stim 
+    % Setup analog out LED stim for 3 LED intensities
+    stim_LED = zeros(1,SAMPLING_RATE * total_duration);
+    
+    MAX_VOLT = 0.5;
+    
+    LED_voltage = [ MAX_VOLT/3.0, 2.0*MAX_VOLT/3.0, MAX_VOLT ];
+    
+    begin_bout_t = 0;   
+    for i = 1:NUMBER_OF_BOUTS        
+       
+       begin_idx = (begin_bout_t+pre_stim_LED) * SAMPLING_RATE;
+       end_idx = (begin_bout_t+pre_stim_LED+stim_t_LED) * SAMPLING_RATE;
+       
+       stim_LED(begin_idx:end_idx) = LED_voltage(i);
+
+       begin_bout_t = begin_bout_t + each_bout_t;
+    end
+    
+    
+    % Setup general STIM
     begin_idx = run_obj.pre_stim_t * SAMPLING_RATE;
     end_idx = (run_obj.pre_stim_t+run_obj.stim_t) * SAMPLING_RATE;
     stim = zeros(1,SAMPLING_RATE * total_duration);
@@ -87,33 +158,32 @@ if(strcmp(stim_type, 'Task File') == 1)
     
     camera_triggers = zeros(1,SAMPLING_RATE * total_duration);
     
-    CAMERA_FPS = 32.0;
-    
+    CAMERA_FPS = 32.0;    
     camera_triggers(1:(SAMPLING_RATE/CAMERA_FPS):end) = 1;
     
     for i = 1:task_cnt
         cur_task = tasks{i}; 
     
         % Camera triggers     
-        pre_out_chan_2(i,:) = camera_triggers;
+        pre_out_chan_4(i,:) = camera_triggers;
         
         if( strcmp(cur_task, 'LeftOdor') == 1 )
-            pre_out_chan_0(i,:) = stim;
+            pre_out_chan_2(i,:) = stim_LED;
         elseif( strcmp(cur_task, 'RightOdor') == 1 )
-            pre_out_chan_1(i,:) = stim;
+            pre_out_chan_3(i,:) = stim_LED;
         elseif( strcmp(cur_task, 'BothOdor') == 1 )
-            pre_out_chan_0(i,:) = stim;
-            pre_out_chan_1(i,:) = stim;
+            pre_out_chan_2(i,:) = stim_LED;
+            pre_out_chan_3(i,:) = stim_LED;
         elseif( strcmp(cur_task, 'PicoPumpInject') == 1 )
-            pre_out_chan_3(i,:) = stim;            
+            pre_out_chan_5(i,:) = stim;            
         elseif( strcmp(cur_task, 'NaturalOdor') == 1 )
-            pre_out_chan_4(i,:) = stim;            
+            pre_out_chan_6(i,:) = stim;            
         elseif( strcmp(cur_task, 'WideFieldLight') == 1 )
-            pre_out_chan_6(i,:) = stim*5.0;
+            pre_out_chan_1(i,:) = stim*5.0;
         elseif( strcmp(cur_task, 'ExternalCommandDepol') == 1 )
-            pre_out_chan_5(i,:) = external_command;
+            pre_out_chan_0(i,:) = external_command;
         elseif( strcmp(cur_task, 'ExternalCommandHypopol') == 1 )
-            pre_out_chan_5(i,:) = -1.0 * external_command;
+            pre_out_chan_0(i,:) = -1.0 * external_command;
         else            
             disp(['ERROR: Task: ' task ' is not recognized.']);
         end

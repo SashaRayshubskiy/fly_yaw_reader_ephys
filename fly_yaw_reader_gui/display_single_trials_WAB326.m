@@ -1,4 +1,4 @@
-function [] = display_single_trials( task, trial_time, trial_data, viz_figs, total_duration, pre_stim_t, stim_t, experiment_dir )
+function [] = display_single_trials_WAB326( task, trial_time, trial_data, viz_figs, total_duration, pre_stim_t, stim_t, experiment_dir )
 
 colors = { rgb('Red'), rgb('Green'), rgb('Blue'), rgb('Black'), rgb('Brown'), rgb('Purple') };
 cur_color = '';
@@ -28,7 +28,7 @@ t_vel_0 = t(1);
 t_0 = trial_time(1);
 
 % Plot forward
-subplot(4,1,1);
+subplot(2,1,1);
 hold on;
 plot( t-t_vel_0, vel_forward, 'color', cur_color );
 ylabel('Fwd velocity (mm/s)');
@@ -39,7 +39,7 @@ hh = fill([ pre_stim_t pre_stim_t (pre_stim_t+stim_t) (pre_stim_t+stim_t) ],[y_m
 set(gca,'children',circshift(get(gca,'children'),-1));
 set(hh, 'EdgeColor', 'None');
 
-subplot(4,1,2);
+subplot(2,1,2);
 hold on;
 plot( t-t_vel_0, vel_yaw, 'color', cur_color );
 ylabel('Yaw velocity (deg/s)');
@@ -49,39 +49,37 @@ y_min = yy(1)-yy(1)*0.01; y_max = yy(2);
 hh = fill([ pre_stim_t pre_stim_t (pre_stim_t+stim_t) (pre_stim_t+stim_t) ],[y_min y_max y_max y_min ], rgb('Wheat'));
 set(gca,'children',circshift(get(gca,'children'),-1));
 set(hh, 'EdgeColor', 'None');
-
-[currentA, voltageA, currentB, voltageB] = get_dual_scaled_voltage_and_current( trial_data );
-
-subplot(4,1,3);
-hold on;
-plot(trial_time-t_0, voltageA, 'color', cur_color );
-%plot(trial_time-t_0, currentA, 'color', cur_color );
-%plot(trial_time-t_0, currentB, 'color', cur_color, 'LineStyle', '--' );
-xlim([0 trial_time(end)-t_0]);
-%ylabel('Current (pA)');
-ylabel('Voltage (mV)');
-title('Left neuron (A)')
-yy = ylim;
-y_min = yy(1)-yy(1)*0.01; y_max = yy(2);
-hh = fill([ pre_stim_t pre_stim_t (pre_stim_t+stim_t) (pre_stim_t+stim_t) ],[y_min y_max y_max y_min ], rgb('Wheat'));
-set(gca,'children',circshift(get(gca,'children'),-1));
-set(hh, 'EdgeColor', 'None');
-
-if 0
-subplot(4,1,4);
-hold on;
-plot(trial_time-t_0, voltageB, 'color', cur_color);
-xlim([0 trial_time(end)-t_0]);
-xlabel('Time (s)');
-ylabel('Voltage (mV)');
-title('Right neuron (B)')
-
-yy = ylim;
-y_min = yy(1)-yy(1)*0.01; y_max = yy(2);
-hh = fill([ pre_stim_t pre_stim_t (pre_stim_t+stim_t) (pre_stim_t+stim_t) ],[y_min y_max y_max y_min ], rgb('Wheat'));
-set(gca,'children',circshift(get(gca,'children'),-1));
-set(hh, 'EdgeColor', 'None');
-end
+% 
+% [currentA, voltageA, currentB, voltageB] = get_dual_scaled_voltage_and_current( trial_data );
+% 
+% subplot(4,1,3);
+% hold on;
+% plot(trial_time-t_0, voltageA, 'color', cur_color );
+% %plot(trial_time-t_0, currentA, 'color', cur_color );
+% %plot(trial_time-t_0, currentB, 'color', cur_color, 'LineStyle', '--' );
+% xlim([0 trial_time(end)-t_0]);
+% %ylabel('Current (pA)');
+% ylabel('Voltage (mV)');
+% title('Left neuron (A)')
+% yy = ylim;
+% y_min = yy(1)-yy(1)*0.01; y_max = yy(2);
+% hh = fill([ pre_stim_t pre_stim_t (pre_stim_t+stim_t) (pre_stim_t+stim_t) ],[y_min y_max y_max y_min ], rgb('Wheat'));
+% set(gca,'children',circshift(get(gca,'children'),-1));
+% set(hh, 'EdgeColor', 'None');
+% 
+% subplot(4,1,4);
+% hold on;
+% plot(trial_time-t_0, voltageB, 'color', cur_color);
+% xlim([0 trial_time(end)-t_0]);
+% xlabel('Time (s)');
+% ylabel('Voltage (mV)');
+% title('Right neuron (B)')
+% 
+% yy = ylim;
+% y_min = yy(1)-yy(1)*0.01; y_max = yy(2);
+% hh = fill([ pre_stim_t pre_stim_t (pre_stim_t+stim_t) (pre_stim_t+stim_t) ],[y_min y_max y_max y_min ], rgb('Wheat'));
+% set(gca,'children',circshift(get(gca,'children'),-1));
+% set(hh, 'EdgeColor', 'None');
 
 end
 

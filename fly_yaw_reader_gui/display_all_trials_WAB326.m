@@ -1,4 +1,4 @@
-function [] = display_all_trials( task, trial_time, trial_data, viz_figs, pre_stim_t, stim_t, experiment_dir )
+function [] = display_all_trials_WAB326( task, trial_time, trial_data, viz_figs, pre_stim_t, stim_t, experiment_dir )
 
 colors = { rgb('Red'), rgb('Green'), rgb('Blue'), rgb('Black'), rgb('Brown'), rgb('Purple')};
 cur_color = '';
@@ -38,7 +38,7 @@ ylabel('Y displacement (mm)');
 set( 0, 'CurrentFigure', viz_figs.all_trials_fig )
 
 % Plot forward
-subplot(4,1,1);
+subplot(2,1,1);
 hold on;
 plot( t, vel_forward, 'color', cur_color );
 ylabel('Fwd velocity (au/s)');
@@ -52,7 +52,7 @@ hh = fill([ t_vel_first+pre_stim_t t_vel_first+pre_stim_t (t_vel_first+pre_stim_
 set(gca,'children',circshift(get(gca,'children'),-1));
 set(hh, 'EdgeColor', 'None');
 
-subplot(4,1,2);
+subplot(2,1,2);
 hold on;
 plot( t, vel_yaw, 'color', cur_color );
 ylabel('Yaw velocity (au/s)');
@@ -63,34 +63,34 @@ hh = fill([ t_vel_first+pre_stim_t t_vel_first+pre_stim_t (t_vel_first+pre_stim_
 set(gca,'children',circshift(get(gca,'children'),-1));
 set(hh, 'EdgeColor', 'None');
 
-[currentA, voltageA, currentB, voltageB] = get_dual_scaled_voltage_and_current( trial_data );
-
-t_first = trial_time(1);
-
-subplot(4,1,3);
-hold on;
-plot(trial_time, currentA, 'color', cur_color );
-plot(trial_time, currentB, 'color', cur_color, 'LineStyle', '--' );
-xlim([0 trial_time(end)]);
-ylabel('Current (pA)');
-yy = ylim;
-y_min = yy(1)-yy(1)*0.01; y_max = yy(2);
-hh = fill([ t_first+pre_stim_t t_first+pre_stim_t (t_first+pre_stim_t+stim_t) (t_first+pre_stim_t+stim_t) ],[y_min y_max y_max y_min ], rgb('Wheat'));
-set(gca,'children',circshift(get(gca,'children'),-1));
-set(hh, 'EdgeColor', 'None');
-
-subplot(4,1,4);
-hold on;
-plot(trial_time, voltageA, 'color', cur_color );
-plot(trial_time, voltageB, 'color', cur_color, 'LineStyle', '--' );
-xlim([0 trial_time(end)]);
-xlabel('Time (s)');
-ylabel('Voltage (mV)')
-yy = ylim;
-y_min = yy(1)-yy(1)*0.01; y_max = yy(2);
-hh = fill([ t_first+pre_stim_t t_first+pre_stim_t (t_first+pre_stim_t+stim_t) (t_first+pre_stim_t+stim_t) ],[y_min y_max y_max y_min ], rgb('Wheat'));
-set(gca,'children',circshift(get(gca,'children'),-1));
-set(hh, 'EdgeColor', 'None');
+% [currentA, voltageA, currentB, voltageB] = get_dual_scaled_voltage_and_current( trial_data );
+% 
+% t_first = trial_time(1);
+% 
+% subplot(4,1,3);
+% hold on;
+% plot(trial_time, currentA, 'color', cur_color );
+% plot(trial_time, currentB, 'color', cur_color, 'LineStyle', '--' );
+% xlim([0 trial_time(end)]);
+% ylabel('Current (pA)');
+% yy = ylim;
+% y_min = yy(1)-yy(1)*0.01; y_max = yy(2);
+% hh = fill([ t_first+pre_stim_t t_first+pre_stim_t (t_first+pre_stim_t+stim_t) (t_first+pre_stim_t+stim_t) ],[y_min y_max y_max y_min ], rgb('Wheat'));
+% set(gca,'children',circshift(get(gca,'children'),-1));
+% set(hh, 'EdgeColor', 'None');
+% 
+% subplot(4,1,4);
+% hold on;
+% plot(trial_time, voltageA, 'color', cur_color );
+% plot(trial_time, voltageB, 'color', cur_color, 'LineStyle', '--' );
+% xlim([0 trial_time(end)]);
+% xlabel('Time (s)');
+% ylabel('Voltage (mV)')
+% yy = ylim;
+% y_min = yy(1)-yy(1)*0.01; y_max = yy(2);
+% hh = fill([ t_first+pre_stim_t t_first+pre_stim_t (t_first+pre_stim_t+stim_t) (t_first+pre_stim_t+stim_t) ],[y_min y_max y_max y_min ], rgb('Wheat'));
+% set(gca,'children',circshift(get(gca,'children'),-1));
+% set(hh, 'EdgeColor', 'None');
 
 end
 

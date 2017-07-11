@@ -10,6 +10,11 @@ settings.pre_stim = 3.0;
 settings.stim = 0.5;
 settings.post_stim = 3.0;
 
+% settings.pre_stim = 0.5;
+% settings.stim = 0.5;
+% settings.post_stim = 3.0;
+
+
 % Processing settings
 %settings.zero_mean_voltage_per_channel = [2.4875, 2.4712, 2.4952, 2.4914];
 %settings.zero_mean_two_std_per_channel = [0.0137, 0.0151, 0.0142, 0.0156];
