@@ -20,6 +20,8 @@ elseif gain_meta >= 5.85 && gain_meta < 6.37
     gain = 200;
 elseif gain_meta >= 6.37 && gain_meta < 6.85
     gain = 500;
+elseif gain_meta > 8.0
+    gain = 10;
 end
 
 end

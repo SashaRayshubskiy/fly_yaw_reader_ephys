@@ -13,150 +13,200 @@ global stim_t;
 
 global SHOW_TRIAL_DATA;
 
-
 current_trial_idx = 1;
 
-stim_type = run_obj.stim_type;
+task_file_path = run_obj.taskfile_path;
 
-if(strcmp(stim_type, 'Task File') == 1)
-    
-    task_file_path = run_obj.taskfile_path;
-    
-    disp(['About to start trials using task file: ' task_file_path]);
-    
-    tasks = read_task_file(task_file_path);
-    task_cnt = length(tasks);
-            
-    SHOW_TRIAL_DATA = 1;
-    if (SHOW_TRIAL_DATA == 1)
-        %viz_figs.run_traj_fig     = figure();    
-        %viz_figs.all_trials_fig    = figure('units','normalized','outerposition',[0 0 1 1]);
-        viz_figs.single_trials_fig = figure('units','normalized','outerposition',[0 0 1 1]);
-    end
-    
-    session_id = run_obj.session_id;
-    experiment_dir = run_obj.experiment_dir;
-    sessiod_id_hdl = run_obj.sessiod_id_hdl;
-    
-    % Setup data structures for read / write on the daq board
-    session_obj = daq.createSession('ni');
-    deviceId = 'Dev3';
-    
-    session_obj.addDigitalChannel( deviceId, 'port0/line0:4', 'OutputOnly' );
-    session_obj.addAnalogOutputChannel( deviceId, [0 1], 'Voltage');
-    
-    % These are for inputs: motion sensor 1 x,y; motion sensor 2 x,y; frame
-    % clock; stim left; stim right;
-    ai_channels_used = [0:31];
-    aI = session_obj.addAnalogInputChannel( deviceId, ai_channels_used, 'Voltage' );
-    for i=1:length(ai_channels_used)
-        aI(i).InputType = 'SingleEnded';
-    end
-    
-    % This is the stim control: stim left, stim right
-    settings = sensor_settings;
-    
-    total_duration = run_obj.pre_stim_t + run_obj.stim_t + run_obj.post_stim_t + run_obj.inter_trial_t;
-    
-    SAMPLING_RATE = settings.sampRate;
-    session_obj.Rate = SAMPLING_RATE;
-   
-    pre_out_chan_0 = zeros( task_cnt, SAMPLING_RATE * total_duration );
-    pre_out_chan_1 = zeros( task_cnt, SAMPLING_RATE * total_duration );    
-    pre_out_chan_2 = zeros( task_cnt, SAMPLING_RATE * total_duration );
-    pre_out_chan_3 = zeros( task_cnt, SAMPLING_RATE * total_duration );
-    pre_out_chan_4 = zeros( task_cnt, SAMPLING_RATE * total_duration );
+disp(['About to start trials using task file: ' task_file_path]);
 
-    pre_out_chan_5 = zeros( task_cnt, SAMPLING_RATE * total_duration );
-    pre_out_chan_6 = zeros( task_cnt, SAMPLING_RATE * total_duration );
-    
-    pre_stim_t = run_obj.pre_stim_t;
-    stim_t     = run_obj.stim_t;
-    
-    % Setup optogenetic stim 
-    begin_idx = run_obj.pre_stim_t * SAMPLING_RATE;
-    end_idx = (run_obj.pre_stim_t+run_obj.stim_t) * SAMPLING_RATE;
-    stim = zeros(1,SAMPLING_RATE * total_duration);
-    stim(begin_idx:end_idx) = 1.0;
+tasks = read_task_file(task_file_path);
+task_cnt = length(tasks);
 
-    % Setup external command stim
-    CURRENT_INJECTION_IN_pA_PER_VOLT = 127.0; % This number assumes a 0.0637 voltage drop across the downstep resistors    
-    injection_current = run_obj.injection_current;    
-    external_command = zeros( SAMPLING_RATE*total_duration , 1 );    
-    external_command(begin_idx:end_idx) = injection_current ./ CURRENT_INJECTION_IN_pA_PER_VOLT;
+SHOW_TRIAL_DATA = 1;
+if (SHOW_TRIAL_DATA == 1)
+    %viz_figs.run_traj_fig     = figure();
+    %viz_figs.all_trials_fig    = figure('units','normalized','outerposition',[0 0 1 1]);
+    viz_figs.single_trials_fig = figure('units','normalized','outerposition',[0 0 1 1]);
+end
+
+session_id = run_obj.session_id;
+experiment_dir = run_obj.experiment_dir;
+sessiod_id_hdl = run_obj.sessiod_id_hdl;
+
+% Setup data structures for read / write on the daq board
+session_obj = daq.createSession('ni');
+deviceId = 'Dev3';
+
+session_obj.addAnalogOutputChannel( deviceId, [2 3], 'Voltage' );
+session_obj.addDigitalChannel( deviceId, 'port0/line2:4', 'OutputOnly' );
+session_obj.addAnalogOutputChannel( deviceId, [0 1], 'Voltage' );
+
+% These are for inputs: motion sensor 1 x,y; motion sensor 2 x,y; frame
+% clock; stim left; stim right;
+ai_channels_used = [0:31];
+aI = session_obj.addAnalogInputChannel( deviceId, ai_channels_used, 'Voltage' );
+for i=1:length(ai_channels_used)
+    aI(i).InputType = 'SingleEnded';
+end
+
+% This is the stim control: stim left, stim right
+settings = sensor_settings;
+
+pre_stim_t = run_obj.pre_stim_t;
+stim_t = run_obj.stim_t;
+post_stim_t = run_obj.post_stim_t;
+inter_trial_t = run_obj.inter_trial_t;
+
+total_duration = run_obj.pre_stim_t + run_obj.stim_t + run_obj.post_stim_t + run_obj.inter_trial_t;
+
+SAMPLING_RATE = settings.sampRate;
+session_obj.Rate = SAMPLING_RATE;
+disp(['Sample rate: ' num2str(SAMPLING_RATE)]);
+
+pre_out_chan_0 = zeros( task_cnt, int32(SAMPLING_RATE) * total_duration );
+pre_out_chan_1 = zeros( task_cnt, int32(SAMPLING_RATE) * total_duration );
+
+pre_out_chan_2 = zeros( task_cnt, int32(SAMPLING_RATE) * total_duration );
+pre_out_chan_3 = zeros( task_cnt, int32(SAMPLING_RATE) * total_duration );
+pre_out_chan_4 = zeros( task_cnt, int32(SAMPLING_RATE) * total_duration );
+
+pre_out_chan_5 = zeros( task_cnt, int32(SAMPLING_RATE) * total_duration );
+pre_out_chan_6 = zeros( task_cnt, int32(SAMPLING_RATE) * total_duration );
+
+% Setup optogenetic stim
+LIGHT_LEVEL = 0.500;
+%LIGHT_LEVEL = 1.0;
+disp(['Light level: ' num2str(LIGHT_LEVEL)]);
+begin_idx = floor(run_obj.pre_stim_t * SAMPLING_RATE);
+end_idx = ceil((run_obj.pre_stim_t+run_obj.stim_t) * SAMPLING_RATE);
+LED_stim = zeros(1, int32(SAMPLING_RATE * total_duration));
+LED_stim(begin_idx:end_idx) = LIGHT_LEVEL;
+
+%
+begin_idx = floor(run_obj.pre_stim_t * SAMPLING_RATE);
+end_idx = ceil((run_obj.pre_stim_t+run_obj.stim_t) * SAMPLING_RATE);
+digital_stim = zeros(1, int32(SAMPLING_RATE * total_duration));
+digital_stim(begin_idx:end_idx) = 1.0;
+
+%
+AcR_begin_idx  = floor((run_obj.pre_stim_t-1.0) * SAMPLING_RATE);
+AcR_end_idx    = ceil((run_obj.pre_stim_t+run_obj.stim_t+1.0) * SAMPLING_RATE);
+AcR_stim       = zeros(1,int32(SAMPLING_RATE * total_duration));
+AcR_stim( AcR_begin_idx : AcR_end_idx ) = 5.0;
+
+% Setup external command stim
+CURRENT_INJECTION_IN_pA_PER_VOLT = 127.0; % This number assumes a 0.0637 voltage drop across the downstep resistors
+injection_current = run_obj.injection_current;
+external_command = zeros( floor(SAMPLING_RATE*total_duration) , 1 );
+external_command(begin_idx:end_idx) = injection_current ./ CURRENT_INJECTION_IN_pA_PER_VOLT;
+
+% Setup sound
+sound_stim = SineWave;
+sound_stim.carrierFreqHz = 100;
+sound_stim.speaker = 1;
+sound_stim.sineDur = 0.5;
+sound_stim.startPadDur = 3.0; 
+sound_stim.endPadDur = 3.0 + inter_trial_t;
+
+% sound_stim = PipStimulus;
+% sound_stim.carrierFreqHz = 200;
+% sound_stim.speaker = 1;
+% sound_stim.numPips = 20;
+% sound_stim.startPadDur = 3.0; 
+% sound_stim.endPadDur = 3.0 + inter_trial_t;
+
+camera_triggers = zeros(1, int32(SAMPLING_RATE * total_duration));
+
+CAMERA_FPS = 32.0;
+SAMPLES_TO_TRIGGER = floor(SAMPLING_RATE/CAMERA_FPS); 
+
+camera_triggers(1:SAMPLES_TO_TRIGGER:end) = 1;
+
+for i = 1:task_cnt
+    cur_task = tasks{i};
     
-    camera_triggers = zeros(1,SAMPLING_RATE * total_duration);
+    % Camera triggers
+    pre_out_chan_2(i,:) = camera_triggers;
     
-    CAMERA_FPS = 32.0;
-    
-    camera_triggers(1:(SAMPLING_RATE/CAMERA_FPS):end) = 1;
-    
-    for i = 1:task_cnt
-        cur_task = tasks{i}; 
-    
-        % Camera triggers     
-        pre_out_chan_2(i,:) = camera_triggers;
-        
-        if( strcmp(cur_task, 'LeftOdor') == 1 )
-            pre_out_chan_0(i,:) = stim;
-        elseif( strcmp(cur_task, 'RightOdor') == 1 )
-            pre_out_chan_1(i,:) = stim;
-        elseif( strcmp(cur_task, 'BothOdor') == 1 )
-            pre_out_chan_0(i,:) = stim;
-            pre_out_chan_1(i,:) = stim;
-        elseif( strcmp(cur_task, 'PicoPumpInject') == 1 )
-            pre_out_chan_3(i,:) = stim;            
-        elseif( strcmp(cur_task, 'NaturalOdor') == 1 )
-            pre_out_chan_4(i,:) = stim;            
-        elseif( strcmp(cur_task, 'WideFieldLight') == 1 )
-            pre_out_chan_6(i,:) = stim*5.0;
-        elseif( strcmp(cur_task, 'ExternalCommandDepol') == 1 )
-            pre_out_chan_5(i,:) = external_command;
-        elseif( strcmp(cur_task, 'ExternalCommandHypopol') == 1 )
-            pre_out_chan_5(i,:) = -1.0 * external_command;
-        else            
-            disp(['ERROR: Task: ' task ' is not recognized.']);
-        end
+    if( strcmp(cur_task, 'LeftOdor') == 1 )
+        pre_out_chan_0(i,:) = LED_stim;
+    elseif( strcmp(cur_task, 'RightOdor') == 1 )
+        pre_out_chan_1(i,:) = LED_stim;
+    elseif( strcmp(cur_task, 'BothOdor') == 1 )
+        pre_out_chan_0(i,:) = LED_stim;
+        pre_out_chan_1(i,:) = LED_stim;
+    elseif( strcmp(cur_task, 'PicoPumpInject') == 1 )
+        pre_out_chan_3(i,:) = digital_stim;
+    elseif( strcmp(cur_task, 'NaturalOdor') == 1 )
+        pre_out_chan_4(i,:) = digital_stim;
+    elseif( strcmp(cur_task, 'WideFieldLight') == 1 )
+        pre_out_chan_6(i,:) = digital_stim*5.0;
+    elseif( strcmp(cur_task, 'WideFieldLightAcR') == 1 )
+        pre_out_chan_6(i,:) = AcR_stim;
+    elseif( strcmp(cur_task, 'WideFieldLightAcRNaturalOdor') == 1 )
+        pre_out_chan_6(i,:) = AcR_stim;
+        pre_out_chan_4(i,:) = digital_stim;
+    elseif( strcmp(cur_task, 'ExternalCommandDepol') == 1 )
+        pre_out_chan_5(i,:) = external_command;
+    elseif( strcmp(cur_task, 'ExternalCommandHypopol') == 1 )
+        pre_out_chan_5(i,:) = -1.0 * external_command;
+    elseif( strcmp(cur_task, 'LeftSpeaker') == 1 )
+        pre_out_chan_0(i,:) = sound_stim.stimulus(1:size(pre_out_chan_0,2));
+        %pre_out_chan_5(i,:) = sound_stim.stimulus(1:size(pre_out_chan_0,2));
+    elseif( strcmp(cur_task, 'RightSpeaker') == 1 )
+        pre_out_chan_1(i,:) = sound_stim.stimulus(1:size(pre_out_chan_0,2));
+    elseif( strcmp(cur_task, 'BothSpeaker') == 1 )
+        pre_out_chan_0(i,:) = sound_stim.stimulus(1:size(pre_out_chan_0,2));
+        pre_out_chan_1(i,:) = sound_stim.stimulus(1:size(pre_out_chan_0,2));
+    else
+        disp(['ERROR: Task: ' cur_task ' is not recognized.']);
     end
-    
-    out_chan_0 = reshape( pre_out_chan_0', [size(pre_out_chan_0,1)*size(pre_out_chan_0,2) 1]);
-    out_chan_1 = reshape( pre_out_chan_1', [size(pre_out_chan_1,1)*size(pre_out_chan_1,2) 1]);
-    out_chan_2 = reshape( pre_out_chan_2', [size(pre_out_chan_2,1)*size(pre_out_chan_2,2) 1]);
-    out_chan_3 = reshape( pre_out_chan_3', [size(pre_out_chan_3,1)*size(pre_out_chan_3,2) 1]);
-    out_chan_4 = reshape( pre_out_chan_4', [size(pre_out_chan_4,1)*size(pre_out_chan_4,2) 1]);
-    out_chan_5 = reshape( pre_out_chan_5', [size(pre_out_chan_5,1)*size(pre_out_chan_5,2) 1]);
-    out_chan_6 = reshape( pre_out_chan_6', [size(pre_out_chan_6,1)*size(pre_out_chan_6,2) 1]);
-    
-    if 0
+end
+
+out_chan_0 = reshape( pre_out_chan_0', [size(pre_out_chan_0,1)*size(pre_out_chan_0,2) 1]);
+out_chan_1 = reshape( pre_out_chan_1', [size(pre_out_chan_1,1)*size(pre_out_chan_1,2) 1]);
+out_chan_2 = reshape( pre_out_chan_2', [size(pre_out_chan_2,1)*size(pre_out_chan_2,2) 1]);
+out_chan_3 = reshape( pre_out_chan_3', [size(pre_out_chan_3,1)*size(pre_out_chan_3,2) 1]);
+out_chan_4 = reshape( pre_out_chan_4', [size(pre_out_chan_4,1)*size(pre_out_chan_4,2) 1]);
+out_chan_5 = reshape( pre_out_chan_5', [size(pre_out_chan_5,1)*size(pre_out_chan_5,2) 1]);
+out_chan_6 = reshape( pre_out_chan_6', [size(pre_out_chan_6,1)*size(pre_out_chan_6,2) 1]);
+
+if 0
     figure;
     hold on;
     plot(out_chan_0, 'b');
     plot(out_chan_1, 'g');
-    end
-    
-    buffer = zeros(SAMPLING_RATE,1);
-    
-    out_chan_0 = vertcat( out_chan_0, buffer );
-    out_chan_1 = vertcat( out_chan_1, buffer );
-    out_chan_2 = vertcat( out_chan_2, buffer );
-    out_chan_3 = vertcat( out_chan_3, buffer );
-    out_chan_4 = vertcat( out_chan_4, buffer );    
-    out_chan_5 = vertcat( out_chan_5, buffer );
-    out_chan_6 = vertcat( out_chan_6, buffer );
-    
-    output_data = [ out_chan_0, out_chan_1, out_chan_2, out_chan_3, out_chan_4, out_chan_5, out_chan_6 ];
-    
-    queueOutputData( session_obj, output_data );
-    
-    addlistener( session_obj, 'DataAvailable', @processTrialData );
-    session_obj.NotifyWhenDataAvailableExceeds = session_obj.Rate * total_duration;
-    session_obj.IsContinuous = true;
-    session_obj.startBackground();
-    
-else
-    disp(stim_type);
-    disp(['ERROR: stim_type: ' stim_type ' is not supported.']);
 end
+
+buffer = zeros(SAMPLING_RATE,1);
+
+out_chan_0 = vertcat( out_chan_0, buffer );
+out_chan_1 = vertcat( out_chan_1, buffer );
+out_chan_2 = vertcat( out_chan_2, buffer );
+out_chan_3 = vertcat( out_chan_3, buffer );
+out_chan_4 = vertcat( out_chan_4, buffer );
+out_chan_5 = vertcat( out_chan_5, buffer );
+out_chan_6 = vertcat( out_chan_6, buffer );
+
+output_data = [ out_chan_0, out_chan_1, out_chan_2, out_chan_3, out_chan_4, out_chan_5, out_chan_6 ];
+
+% Output experiment metadata file
+exp_metadata_file = [ experiment_dir '/metadata_sid_' num2str(session_id) '.mat' ];
+
+pre_stim_t = run_obj.pre_stim_t;
+stim_t = run_obj.stim_t;
+post_stim_t = run_obj.post_stim_t;
+inter_trial_t = run_obj.inter_trial_t;
+
+save(exp_metadata_file, 'LIGHT_LEVEL', 'SAMPLING_RATE', 'pre_stim_t', 'stim_t', 'post_stim_t', 'inter_trial_t');
+
+queueOutputData( session_obj, output_data );
+
+addlistener( session_obj, 'DataAvailable', @processTrialData );
+xx = floor(session_obj.Rate * total_duration);
+session_obj.NotifyWhenDataAvailableExceeds = xx;
+session_obj.IsContinuous = true;
+session_obj.startBackground();
 
 end
 
@@ -183,7 +233,7 @@ function processTrialData(src,event)
         display_single_trials( cur_task, trial_time, trial_bdata, viz_figs, total_duration, pre_stim_t, stim_t, experiment_dir );  
     end
     
-    disp(['Finished with trial: ' num2str(current_trial_idx-1) ]);
+    disp(['Finished with trial: ' num2str(current_trial_idx-1) ' ' cur_task]);
 
     cur_trial_file_name = [ experiment_dir '\bdata_' cur_trial_corename '.mat' ];
     save( cur_trial_file_name, 'trial_bdata', 'trial_time' );
@@ -195,8 +245,8 @@ function processTrialData(src,event)
         
         
         if (SHOW_TRIAL_DATA == 1)  
-            saveas( viz_figs.run_traj_fig, [ experiment_dir '\run_traj_' datestr(now, 'yyyy_mmdd_HH_MM_SS') '_sid_' num2str(session_id) '.fig'] );
-            saveas( viz_figs.all_trials_fig, [ experiment_dir '\all_tc_' datestr(now, 'yyyy_mmdd_HH_MM_SS') '_sid_' num2str(session_id) '.fig'] );
+            %saveas( viz_figs.run_traj_fig, [ experiment_dir '\run_traj_' datestr(now, 'yyyy_mmdd_HH_MM_SS') '_sid_' num2str(session_id) '.fig'] );
+            %saveas( viz_figs.all_trials_fig, [ experiment_dir '\all_tc_' datestr(now, 'yyyy_mmdd_HH_MM_SS') '_sid_' num2str(session_id) '.fig'] );
             saveas( viz_figs.single_trials_fig, [ experiment_dir '\single_tc_' datestr(now, 'yyyy_mmdd_HH_MM_SS') '_sid_' num2str(session_id) '.fig'] );
         end
     

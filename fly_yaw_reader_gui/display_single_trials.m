@@ -3,14 +3,16 @@ function [] = display_single_trials( task, trial_time, trial_data, viz_figs, tot
 colors = { rgb('Red'), rgb('Green'), rgb('Blue'), rgb('Black'), rgb('Brown'), rgb('Purple') };
 cur_color = '';
 
-if( (strcmp(task, 'LeftOdor') == 1 ) || (strcmp(task, 'WideFieldLight') == 1 ) || (strcmp(task, 'PicoPumpInject') == 1 ))
+if( (strcmp(task, 'LeftOdor') == 1 ) || (strcmp(task, 'LeftSpeaker') == 1 ) || (strcmp(task, 'WideFieldLight') == 1 ) || (strcmp(task, 'PicoPumpInject') == 1 ) || (strcmp(task, 'WideFieldLightAcR') == 1 ))
     cur_color = colors{1};
-elseif( strcmp(task, 'RightOdor') == 1 )
+elseif( ( strcmp(task, 'RightOdor') == 1 ) || ( strcmp(task, 'RightSpeaker') == 1 ))
     cur_color = colors{2};
-elseif( strcmp(task, 'BothOdor') == 1 )
+elseif( ( strcmp(task, 'BothOdor') == 1 ) || ( strcmp(task, 'BothSpeaker') == 1 ) )
     cur_color = colors{3};
 elseif( strcmp(task, 'NaturalOdor') == 1 )
     cur_color = colors{4};
+elseif( strcmp(task, 'WideFieldLightAcRNaturalOdor') == 1 )
+    cur_color = colors{3};
 elseif( strcmp(task, 'ExternalCommandDepol') == 1 )
     cur_color = colors{5};
 elseif( strcmp(task, 'ExternalCommandHypopol') == 1 )
@@ -50,7 +52,7 @@ hh = fill([ pre_stim_t pre_stim_t (pre_stim_t+stim_t) (pre_stim_t+stim_t) ],[y_m
 set(gca,'children',circshift(get(gca,'children'),-1));
 set(hh, 'EdgeColor', 'None');
 
-[currentA, voltageA, currentB, voltageB] = get_dual_scaled_voltage_and_current( trial_data );
+[currentA, voltageA, currentB, voltageB] = get_dual_scaled_voltage_and_current( trial_data, 1 );
 
 subplot(4,1,3);
 hold on;
@@ -67,7 +69,23 @@ hh = fill([ pre_stim_t pre_stim_t (pre_stim_t+stim_t) (pre_stim_t+stim_t) ],[y_m
 set(gca,'children',circshift(get(gca,'children'),-1));
 set(hh, 'EdgeColor', 'None');
 
+
 if 0
+subplot(4,1,4);
+hold on;
+plot(trial_time-t_0, currentA, 'color', cur_color);
+xlim([0 trial_time(end)-t_0]);
+xlabel('Time (s)');
+ylabel('Current (pA)');
+
+yy = ylim;
+y_min = yy(1)-yy(1)*0.01; y_max = yy(2);
+hh = fill([ pre_stim_t pre_stim_t (pre_stim_t+stim_t) (pre_stim_t+stim_t) ],[y_min y_max y_max y_min ], rgb('Wheat'));
+set(gca,'children',circshift(get(gca,'children'),-1));
+set(hh, 'EdgeColor', 'None');
+end
+
+if 1
 subplot(4,1,4);
 hold on;
 plot(trial_time-t_0, voltageB, 'color', cur_color);

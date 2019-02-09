@@ -22,7 +22,7 @@ function varargout = fly_tracker(varargin)
 
 % Edit the above text to modify the response to help fly_tracker
 
-% Last Modified by GUIDE v2.5 30-Nov-2016 09:58:39
+% Last Modified by GUIDE v2.5 13-Jul-2017 16:19:48
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -59,7 +59,8 @@ handles.output = hObject;
 % uiwait(handles.figure1);
 
 % Prompt for an experiment directory
-dname = uigetdir('C:\Users\sasha\Dropbox\Wilson_lab\paper_1\data\descending_neurons\', 'Please chose an experiment directory.');
+%dname = uigetdir('C:\Users\sasha\Dropbox\Wilson_lab\paper_1\data\descending_neurons\', 'Please chose an experiment directory.');
+dname = uigetdir('C:\Users\sasha\Dropbox\Wilson_lab\paper_1\data\osmotropotaxis_behavior_only\Kir2.1_R60D05\', 'Please chose an experiment directory.');
 handles.experiment_dir = dname;
 
 ghandles = guihandles(hObject);
@@ -218,7 +219,32 @@ function stim_type_menu_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns stim_type_menu contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from stim_type_menu
+ghandles = guihandles(hObject);
+contents = get(ghandles.stim_type_menu,'String'); 
+selected = get(ghandles.stim_type_menu,'Value'); 
 
+selected_type = contents{selected};
+
+if(strcmp(selected_type, 'Opto') == 1 )
+    set(ghandles.pre_stim_edit, 'String', '3.0');
+    set(ghandles.stim_edit, 'String', '0.5');
+    set(ghandles.post_stim_edit, 'String', '3.0');
+    set(ghandles.inter_trial_period_edit, 'String', '5.0');
+elseif(strcmp(selected_type, 'OptoMod') == 1 )
+    set(ghandles.pre_stim_edit, 'String', '0.5');
+    set(ghandles.stim_edit, 'String', '0.25');
+    set(ghandles.post_stim_edit, 'String', '3.0');
+    set(ghandles.inter_trial_period_edit, 'String', '5.0');
+elseif(strcmp(selected_type, 'OptoRatio') == 1 )
+    set(ghandles.pre_stim_edit, 'String', '0.5');
+    set(ghandles.stim_edit, 'String', '0.5');
+    set(ghandles.post_stim_edit, 'String', '0.5');
+    set(ghandles.inter_trial_period_edit, 'String', '2.0');    
+else
+    disp(['ERROR: String ' selected_type ' not recognized']);
+end
+
+guidata(hObject, handles);
 
 % --- Executes during object creation, after setting all properties.
 function stim_type_menu_CreateFcn(hObject, eventdata, handles)
@@ -300,7 +326,11 @@ run_obj.post_stim_t = str2num(get(ghandles.post_stim_edit, 'String'));
 run_obj.inter_trial_t = str2num(get(ghandles.inter_trial_period_edit, 'String'));
 
 contents = get(ghandles.stim_type_menu,'String'); 
-run_obj.stim_type = contents; % contents{get(ghandles.stim_type_menu,'Value')};
+selected = get(ghandles.stim_type_menu,'Value'); 
+selected_type = contents{selected};
+
+run_obj.selected_experiment_type = selected_type;
+run_obj.stim_type = selected_type; 
 
 run_obj.experiment_dir = handles.experiment_dir;
 run_obj.session_id = str2num(get(ghandles.session_id_edit, 'String'));
@@ -311,9 +341,16 @@ run_obj.injection_current = str2num(get(ghandles.external_command_edit, 'String'
 
 run_obj.patch_id = str2num(get(ghandles.patch_id_edit, 'String'));
 
-%start_trials(run_obj);
-start_trials_continuous(run_obj);
-%start_trials_continuous_LED_mod(run_obj);
+if(strcmp(selected_type, 'Opto') == 1 )
+    %start_trials(run_obj);
+    start_trials_continuous(run_obj);
+elseif(strcmp(selected_type, 'OptoMod') == 1 )
+    start_trials_continuous_LED_mod(run_obj);
+elseif(strcmp(selected_type, 'OptoRatio') == 1 )
+    start_trials_continuous_LED_mod_ratio(run_obj);
+else
+    disp(['ERROR: String ' contents ' not recognized']);
+end
 
 guidata(hObject, handles);
 
@@ -681,3 +718,12 @@ function patch_id_edit_B_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in ratio_optostim_checkbox.
+function ratio_optostim_checkbox_Callback(hObject, eventdata, handles)
+% hObject    handle to ratio_optostim_checkbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of ratio_optostim_checkbox

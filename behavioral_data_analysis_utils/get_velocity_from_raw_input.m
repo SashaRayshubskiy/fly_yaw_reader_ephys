@@ -1,12 +1,19 @@
-function [ t, vel ] = get_velocity_from_raw_input( raw_data, time, zero_volt_mark, zero_volt_noise_2std )
+function [ t, vel ] = get_velocity_from_raw_input( raw_data, time, zero_volt_mark, zero_volt_noise_2std, samplingRate )
 
 settings = sensor_settings;
+if(nargin == 5 )
+   cur_samplingRate = samplingRate;
+else
+   cur_samplingRate = settings.sampRate; 
+end
+
+dt = cur_samplingRate / settings.sensorPollFreq;
 
 rate = 2*(settings.cutoffFreq/settings.sampRate);
 [kb, ka] = butter(2,rate);
 smoothedData = filtfilt(kb, ka, raw_data);
 
-dt = settings.sampRate/settings.sensorPollFreq;
+
 
 x = floor(length(smoothedData)/dt);
 cut_length = x*dt;
